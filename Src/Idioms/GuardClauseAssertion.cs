@@ -128,9 +128,9 @@ namespace AutoFixture.Idioms
             // According to MSDN method with yield could have only 4 possible types:
             // https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/yield
             var isReturnTypePossibleDefferable = returnType == typeof(IEnumerable)
-                   || returnType == typeof(IEnumerator)
-                   || (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                   || (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(IEnumerator<>));
+                || returnType == typeof(IEnumerator)
+                || (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                || (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(IEnumerator<>));
 
             var containsByRefArgs = methodInfo.GetParameters().Select(p => p.ParameterType).Any(t => t.IsByRef);
 
@@ -207,11 +207,17 @@ namespace AutoFixture.Idioms
         private void DoVerify(IMethod method, bool isReturnValueDeferable, bool isReturnValueTask)
         {
             if (isReturnValueDeferable)
+            {
                 this.VerifyDeferrableIterator(method);
+            }
             else if (isReturnValueTask)
+            {
                 this.VerifyDeferrableTask(method);
+            }
             else
+            {
                 this.VerifyNormal(method);
+            }
         }
 
         private void VerifyDeferrableIterator(IMethod method)

@@ -217,13 +217,45 @@ namespace AutoFixture.Idioms
                 {
                     if (this.value == null)
                     {
-                        this.value = new DynamicDummyType(
-                                this.specimenBuilder, this.GetBaseType(), this.GetInterfaces())
-                            .Value;
+                        try
+                        {
+                            this.value = new DynamicDummyType(
+                                    this.specimenBuilder, this.GetBaseType(), this.GetInterfaces())
+                                .Value;
+                        }
+                        catch (BadImageFormatException ex)
+                        {
+                            // If dynamic type creation fails, try to find a suitable existing type
+                            this.value = this.GetFallbackTypeForConstraint();
+                        }
                     }
 
                     return this.value;
                 }
+            }
+
+            private Type GetFallbackTypeForConstraint()
+            {
+                // Try to find a suitable existing type that satisfies the constraints
+                if (this.GenericArgument.GetGenericParameterConstraints().Any(c => c == typeof(IEquatable<>).MakeGenericType(this.GenericArgument)))
+                {
+                    // For IEquatable<T> constraint, use string as a fallback
+                    return typeof(string);
+                }
+
+                if (this.HasClassConstraint())
+                {
+                    // For class constraint, use string as a fallback
+                    return typeof(string);
+                }
+
+                return this.GenericArgument.GetGenericParameterConstraints().Any(c => c.IsValueType) ?
+
+                    // For struct constraint, use int as a fallback
+                    typeof(int) :
+
+                    // Default fallback
+                    typeof(object);
             }
 
             private Type GetBaseType()
@@ -265,7 +297,11 @@ namespace AutoFixture.Idioms
 
             private static readonly AssemblyBuilder AssemblyBuilder =
                 AssemblyBuilder.DefineDynamicAssembly(
-                    new AssemblyName("AutoFixture.DynamicProxyAssembly"),
+                    new AssemblyName("AutoFixture.DynamicProxyAssembly")
+                    {
+                        // Ensure assembly is not strongly named to avoid BadImageFormatException
+                        Flags = AssemblyNameFlags.None
+                    },
                     AssemblyBuilderAccess.Run);
 
             private static readonly ModuleBuilder ModuleBuilder =
@@ -313,7 +349,8 @@ namespace AutoFixture.Idioms
                         this.GetBaseTypeName(),
                         TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed,
                         this.baseType,
-                        this.interfaces);
+                        this.interfaces
+                    );
                 }
             }
 
