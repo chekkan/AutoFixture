@@ -1,4 +1,5 @@
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -234,6 +235,30 @@ namespace AutoFixture.IdiomsUnitTest
             Assert.Equal(assembliesBefore, assembliesAfter);
         }
 
+        [Fact]
+        public void VerifyOnMethodWithGenericConstraint()
+        {
+           var methodToTest = MemberRef.MethodByName(
+                typeof(MethodsWithNullGuard),
+                nameof(MethodsWithNullGuard.ConsumeGenericConstraint)
+            );
+            var sut = new GuardClauseAssertion(new Fixture());
+            var e = Assert.Throws<GuardClauseException>(() => sut.Verify(methodToTest.Member));
+            Assert.Contains("Are you missing a Guard Clause?", e.Message);
+        }
+
+        [Fact]
+        public void VerifyOnMethodWithGenericConstraintWithNullGuard()
+        {
+            var methodToTest = MemberRef.MethodByName(
+                typeof(MethodsWithNullGuard),
+                nameof(MethodsWithNullGuard.ConsumeGenericConstraintWithNullGuard)
+            );
+            var sut = new GuardClauseAssertion(new Fixture());
+            // No exception should be thrown because the method has a null guard
+            Assert.Null(Record.Exception(() => sut.Verify(methodToTest.Member)));
+        }
+        
         private class NoContraint<T>
         {
             public NoContraint(T argument)
@@ -662,6 +687,20 @@ namespace AutoFixture.IdiomsUnitTest
             public NestedGenericParameterTestType(Func<T1, IEnumerable<IEnumerable<T2>>, T1[][]> arg1, T2 arg2)
             {
                 if (arg1 == null) throw new ArgumentNullException(nameof(arg1));
+            }
+        }
+
+        private class MethodsWithNullGuard
+        {
+            public void ConsumeGenericConstraint<T>(T value)
+                where T : IEquatable<T> { }
+
+            public void ConsumeGenericConstraintWithNullGuard<T>(T value) where T : IEquatable<T>
+            {
+                if(value == null)
+                {
+                    throw new ArgumentNullException(nameof(value));
+                }
             }
         }
     }
