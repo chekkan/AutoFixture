@@ -349,4 +349,4 @@ if BuildServer.buildServer = AppVeyor
 BuildServer.install [ AppVeyor.Installer ]
 
 // ========= ENTRY POINT =========
-Target.runOrDefault "CompleteBuild"
+Target.runOrDefaultWithArguments "CompleteBuild"

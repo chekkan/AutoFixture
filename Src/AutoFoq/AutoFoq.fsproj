@@ -38,7 +38,7 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
     <PackageReference Include="Foq" Version="[1.5.1,2.0.0)" />
-    <PackageReference Include="FSharp.Core" Version="[3.0.2,5.0.0)" />
+    <PackageReference Include="FSharp.Core" Version="4.2.3" />
   </ItemGroup>
 
   <ItemGroup>
